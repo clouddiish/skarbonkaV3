@@ -1,14 +1,33 @@
-import "bootstrap/dist/css/bootstrap.css";
-import "bootstrap-icons/font/bootstrap-icons.css";
-import "./App.css";
-import TitleBar from "./components/TitleBar";
-import EditableTransactionTable from "./components/EditableTransactionTable";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 
-export default function App() {
+function TransactionsList() {
+  const [transactions, setTransactions] = useState([]);
+
+  useEffect(() => {
+    axios
+      .get("http://127.0.0.1:8000/transactions/")
+      .then((response) => {
+        setTransactions(response.data);
+      })
+      .catch((error) => {
+        console.error("There was a problem with the axios request:", error);
+      });
+  }, []);
+
   return (
-    <>
-      <TitleBar title="Skarbonka" icon="bi bi-piggy-bank-fill"></TitleBar>
-      <EditableTransactionTable />
-    </>
+    <div>
+      <h2>Transactions List</h2>
+      <ul>
+        {transactions.map((transaction) => (
+          <li key={transaction.transaction_id}>
+            {transaction.transaction_date} - ${transaction.transaction_value} -{" "}
+            {transaction.transaction_type}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
+
+export default TransactionsList;
