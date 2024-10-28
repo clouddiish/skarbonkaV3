@@ -1,4 +1,5 @@
 import fastapi
+from fastapi.middleware.cors import CORSMiddleware
 import sqlmodel
 from datetime import date
 from typing import Optional
@@ -142,3 +143,12 @@ async def del_transactions(transaction_id: int):
         session.delete(transaction)
         session.commit()
         return {"message": "Transaction was deleted"}
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
