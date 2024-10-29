@@ -158,6 +158,8 @@ async def add_transaction(
         if category_name not in category_names:
             add_category(category_name)
 
+        # hiiii
+
         new_transaction = Transactions(
             transaction_date=transaction_date,
             transaction_value=transaction_value,
