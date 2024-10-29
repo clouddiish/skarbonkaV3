@@ -64,7 +64,7 @@ export default function EditableTransactionTable() {
   let categories = new Set();
 
   transactions.forEach((transaction) => {
-    categories.add(transaction.category_id);
+    categories.add(transaction.category_name);
   });
 
   // create JSX options to insert from the categories set

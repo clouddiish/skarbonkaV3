@@ -12,7 +12,7 @@ export default function TransactionTable({
         date={transaction.transaction_date}
         value={transaction.transaction_value}
         type={transaction.transaction_type}
-        category={transaction.category_id}
+        category={transaction.category_name}
         onDeleteTransaction={onDeleteTransaction}
       />
     );
