@@ -39,12 +39,16 @@ class Transactions(sqlmodel.SQLModel, table=True):
 app = fastapi.FastAPI()
 
 
-@app.get("/categories/")
-async def read_categories():
+def getCategories():
     with sqlmodel.Session(engine) as session:
         statement = sqlmodel.select(Categories)
         results = session.exec(statement)
         return results.all()
+
+
+@app.get("/categories/")
+async def read_categories():
+    return getCategories()
 
 
 @app.get("/categories/{category_id}/")
@@ -61,13 +65,10 @@ async def read_category(category_id: int):
 
 
 def getCategoryId(category_name: str):
-    with sqlmodel.Session(engine) as session:
-        statement = sqlmodel.select(Categories)
-        results = session.exec(statement)
-        categories = results.all()
-        for category in categories:
-            if category.category_name == category_name:
-                return category.category_id
+    categories = getCategories()
+    for category in categories:
+        if category.category_name == category_name:
+            return category.category_id
 
 
 @app.post("/categories/add/")
