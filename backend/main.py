@@ -136,23 +136,28 @@ async def read_transaction(transaction_id: int):
 
 
 @app.post("/transactions/add/")
-async def add_transaction(transaction: Transactions):
+async def add_transaction(
+    transaction_date: date,
+    transaction_value: float,
+    transaction_type: TransactionType,
+    category_name: str,
+):
     with sqlmodel.Session(engine) as session:
         if (
-            transaction.transaction_date is None
-            or transaction.transaction_value is None
-            or transaction.transaction_type is None
-            or transaction.category_id is None
+            transaction_date is None
+            or transaction_value is None
+            or transaction_type is None
+            or category_name is None
         ):
             raise fastapi.HTTPException(
                 status_code=400, detail="Transaction attributes cannot be empty"
             )
 
         new_transaction = Transactions(
-            transaction_date=transaction.transaction_date,
-            transaction_value=transaction.transaction_value,
-            transaction_type=transaction.transaction_type,
-            category_id=transaction.category_id,
+            transaction_date=transaction_date,
+            transaction_value=transaction_value,
+            transaction_type=transaction_type,
+            category_id=getCategoryId(category_name),
         )
         session.add(new_transaction)
         session.commit()
