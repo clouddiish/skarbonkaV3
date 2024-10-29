@@ -4,6 +4,7 @@ import sqlmodel
 from datetime import date
 from typing import Optional
 from enum import Enum
+import requests
 
 # SQL MODEL
 
@@ -57,6 +58,16 @@ async def read_category(category_id: int):
         if category is None:
             raise fastapi.HTTPException(status_code=404, detail="Category not found")
         return category
+
+
+def getCategoryId(category_name: str):
+    with sqlmodel.Session(engine) as session:
+        statement = sqlmodel.select(Categories)
+        results = session.exec(statement)
+        categories = results.all()
+        for category in categories:
+            if category.category_name == category_name:
+                return category.category_id
 
 
 @app.post("/categories/add/")
