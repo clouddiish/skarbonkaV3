@@ -71,14 +71,13 @@ def getCategoryId(category_name: str):
             return category.category_id
 
 
-@app.post("/categories/add/")
-async def add_category(category: Categories):
+def add_category(category_name):
     with sqlmodel.Session(engine) as session:
-        if category.category_name is None:
+        if category_name is None:
             raise fastapi.HTTPException(
                 status_code=400, detail="Category name cannot be empty"
             )
-        new_category = Categories(category_name=category.category_name)
+        new_category = Categories(category_name=category_name)
         session.add(new_category)
         session.commit()
         return {"message": "Category was added"}
@@ -154,12 +153,18 @@ async def add_transaction(
                 status_code=400, detail="Transaction attributes cannot be empty"
             )
 
+        category_names = [category.category_name for category in getCategories()]
+
+        if category_name not in category_names:
+            add_category(category_name)
+
         new_transaction = Transactions(
             transaction_date=transaction_date,
             transaction_value=transaction_value,
             transaction_type=transaction_type,
             category_id=getCategoryId(category_name),
         )
+
         session.add(new_transaction)
         session.commit()
         return {"message": "Transaction was added"}
