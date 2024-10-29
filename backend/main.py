@@ -83,8 +83,7 @@ def add_category(category_name):
         return {"message": "Category was added"}
 
 
-@app.delete("/categories/del/{category_id}/")
-async def del_category(category_id: int):
+def del_category(category_id: int):
     with sqlmodel.Session(engine) as session:
         statement = sqlmodel.select(Categories).where(
             Categories.category_id == category_id
@@ -98,8 +97,7 @@ async def del_category(category_id: int):
         return {"message": "Category was deleted"}
 
 
-@app.get("/transactions/")
-async def read_transactions():
+def getTransactions():
     with sqlmodel.Session(engine) as session:
         statement = sqlmodel.select(
             Transactions.transaction_id,
@@ -120,6 +118,11 @@ async def read_transactions():
             for row in results
         ]
         return results_transactions
+
+
+@app.get("/transactions/")
+async def read_transactions():
+    return getTransactions()
 
 
 @app.get("/transactions/{transaction_id}/")
@@ -143,22 +146,10 @@ async def add_transaction(
     category_name: str,
 ):
     with sqlmodel.Session(engine) as session:
-        if (
-            transaction_date is None
-            or transaction_value is None
-            or transaction_type is None
-            or category_name is None
-        ):
-            raise fastapi.HTTPException(
-                status_code=400, detail="Transaction attributes cannot be empty"
-            )
-
         category_names = [category.category_name for category in getCategories()]
 
         if category_name not in category_names:
             add_category(category_name)
-
-        # hiiii
 
         new_transaction = Transactions(
             transaction_date=transaction_date,
@@ -184,6 +175,15 @@ async def del_transactions(transaction_id: int):
             raise fastapi.HTTPException(status_code=404, detail="Transaction not found")
         session.delete(transaction)
         session.commit()
+
+        current_categories_ids = {
+            getCategoryId(transaction["category_name"])
+            for transaction in getTransactions()
+        }
+
+        if transaction.category_id not in current_categories_ids:
+            del_category(transaction.category_id)
+
         return {"message": "Transaction was deleted"}
 
 
