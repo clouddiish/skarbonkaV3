@@ -1,99 +1,154 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy import (
-    create_engine,
-    Column,
-    Integer,
-    String,
-    Date,
-    DECIMAL,
-    Enum,
-    SmallInteger,
-    ForeignKey,
-)
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session, relationship
+import fastapi
+from fastapi.middleware.cors import CORSMiddleware
+import sqlmodel
+from datetime import date
+from typing import Optional
+from enum import Enum
 
-# Database configuration
-DATABASE_URL = "mysql+pymysql://user:user@db/skarbonka"  # Adjust your credentials
+# SQL MODEL
 
-# Setup SQLAlchemy
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+# connect to database
+db_url = "mysql+pymysql://root:root@localhost:3306/skarbonka"
+engine = sqlmodel.create_engine(db_url, echo=True)
 
 
-# Define Category model
-class Category(Base):
-    __tablename__ = "categories"
-    category_id = Column(SmallInteger, primary_key=True, index=True)
-    category_name = Column(String(32))
+# SQLModel models
+class Categories(sqlmodel.SQLModel, table=True):
+    category_id: Optional[int] = sqlmodel.Field(default=None, primary_key=True)
+    category_name: str = sqlmodel.Field(max_length=32)
 
 
-# Define Transaction model
-class Transaction(Base):
-    __tablename__ = "transactions"
-    transaction_id = Column(Integer, primary_key=True, index=True)
-    transaction_date = Column(Date)
-    transaction_value = Column(DECIMAL(65, 2))
-    transaction_type = Column(String(16))
-    category_id = Column(SmallInteger, ForeignKey("categories.category_id"))
-
-    category = relationship("Category")
+class TransactionType(str, Enum):
+    income = "income"
+    expense = "expense"
 
 
-# Create tables
-Base.metadata.create_all(bind=engine)
-
-# FastAPI app
-app = FastAPI()
-
-
-# Dependency to get the DB session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-# Response schema for transactions
-class TransactionResponse:
-    transaction_id: int
-    transaction_date: str
+class Transactions(sqlmodel.SQLModel, table=True):
+    transaction_id: Optional[int] = sqlmodel.Field(default=None, primary_key=True)
+    transaction_date: date
     transaction_value: float
-    transaction_type: str
-    category_name: str
+    transaction_type: TransactionType
+    category_id: Optional[int] = sqlmodel.Field(default=None)
 
 
-# Route to display all transactions
-@app.get("/transactions/", response_model=list[TransactionResponse])
-def read_transactions(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    transactions = db.query(Transaction).join(Category).offset(skip).limit(limit).all()
-    return [
-        {
-            "transaction_id": trans.transaction_id,
-            "transaction_date": trans.transaction_date.strftime(
-                "%Y-%m-%d"
-            ),  # Formatting date
-            "transaction_value": float(trans.transaction_value),
-            "transaction_type": trans.transaction_type,
-            "category_name": trans.category.category_name,
-        }
-        for trans in transactions
-    ]
+# FAST API
+
+app = fastapi.FastAPI()
 
 
-# Route to delete a transaction by ID
-@app.delete("/del_transaction/{transaction_id}", status_code=204)
-def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
-    transaction = (
-        db.query(Transaction)
-        .filter(Transaction.transaction_id == transaction_id)
-        .first()
-    )
-    if not transaction:
-        raise HTTPException(status_code=404, detail="Transaction not found")
-    db.delete(transaction)
-    db.commit()
-    return
+@app.get("/categories/")
+async def read_categories():
+    with sqlmodel.Session(engine) as session:
+        statement = sqlmodel.select(Categories)
+        results = session.exec(statement)
+        return results.all()
+
+
+@app.get("/categories/{category_id}/")
+async def read_category(category_id: int):
+    with sqlmodel.Session(engine) as session:
+        statement = sqlmodel.select(Categories).where(
+            Categories.category_id == category_id
+        )
+        results = session.exec(statement)
+        category = results.first()
+        if category is None:
+            raise fastapi.HTTPException(status_code=404, detail="Category not found")
+        return category
+
+
+@app.post("/categories/add/")
+async def add_category(category: Categories):
+    with sqlmodel.Session(engine) as session:
+        if category.category_name is None:
+            raise fastapi.HTTPException(
+                status_code=400, detail="Category name cannot be empty"
+            )
+        new_category = Categories(category_name=category.category_name)
+        session.add(new_category)
+        session.commit()
+        return {"message": "Category was added"}
+
+
+@app.delete("/categories/del/{category_id}/")
+async def del_category(category_id: int):
+    with sqlmodel.Session(engine) as session:
+        statement = sqlmodel.select(Categories).where(
+            Categories.category_id == category_id
+        )
+        results = session.exec(statement)
+        category = results.first()
+        if category is None:
+            raise fastapi.HTTPException(status_code=404, detail="Category not found")
+        session.delete(category)
+        session.commit()
+        return {"message": "Category was deleted"}
+
+
+@app.get("/transactions/")
+async def read_transactions():
+    with sqlmodel.Session(engine) as session:
+        statement = sqlmodel.select(Transactions)
+        results = session.exec(statement)
+        return results.all()
+
+
+@app.get("/transactions/{transaction_id}/")
+async def read_transaction(transaction_id: int):
+    with sqlmodel.Session(engine) as session:
+        statement = sqlmodel.select(Transactions).where(
+            Transactions.transaction_id == transaction_id
+        )
+        results = session.exec(statement)
+        transaction = results.first()
+        if transaction is None:
+            raise fastapi.HTTPException(status_code=404, detail="Transaction not found")
+        return transaction
+
+
+@app.post("/transactions/add/")
+async def add_transaction(transaction: Transactions):
+    with sqlmodel.Session(engine) as session:
+        if (
+            transaction.transaction_date is None
+            or transaction.transaction_value is None
+            or transaction.transaction_type is None
+            or transaction.category_id is None
+        ):
+            raise fastapi.HTTPException(
+                status_code=400, detail="Transaction attributes cannot be empty"
+            )
+
+        new_transaction = Transactions(
+            transaction_date=transaction.transaction_date,
+            transaction_value=transaction.transaction_value,
+            transaction_type=transaction.transaction_type,
+            category_id=transaction.category_id,
+        )
+        session.add(new_transaction)
+        session.commit()
+        return {"message": "Transaction was added"}
+
+
+@app.delete("/transactions/del/{transaction_id}/")
+async def del_transactions(transaction_id: int):
+    with sqlmodel.Session(engine) as session:
+        statement = sqlmodel.select(Transactions).where(
+            Transactions.transaction_id == transaction_id
+        )
+        results = session.exec(statement)
+        transaction = results.first()
+        if transaction is None:
+            raise fastapi.HTTPException(status_code=404, detail="Transaction not found")
+        session.delete(transaction)
+        session.commit()
+        return {"message": "Transaction was deleted"}
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)

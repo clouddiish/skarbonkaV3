@@ -7,12 +7,12 @@ export default function TransactionTable({
   let rows = transactions.map((transaction) => {
     return (
       <TransactionTableRow
-        key={transaction.id}
-        id={transaction.id}
-        date={transaction.date}
-        value={transaction.value}
-        type={transaction.type}
-        category={transaction.category}
+        key={transaction.transaction_id}
+        id={transaction.transaction_id}
+        date={transaction.transaction_date}
+        value={transaction.transaction_value}
+        type={transaction.transaction_type}
+        category={transaction.category_name}
         onDeleteTransaction={onDeleteTransaction}
       />
     );
@@ -22,11 +22,11 @@ export default function TransactionTable({
     <table className="table my-3">
       <thead>
         <tr>
-          <th>Data</th>
-          <th>Wartość</th>
-          <th>Typ</th>
-          <th>Kategoria</th>
-          <th>Usuń</th>
+          <th>Date</th>
+          <th>Value</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Delete</th>
         </tr>
       </thead>
       <tbody>{rows}</tbody>
