@@ -28,7 +28,9 @@ class Transactions(sqlmodel.SQLModel, table=True):
     transaction_date: date
     transaction_value: float
     transaction_type: TransactionType
-    category_id: Optional[int] = sqlmodel.Field(default=None)
+    category_id: Optional[int] = sqlmodel.Field(
+        default=None, foreign_key="categories.category_id"
+    )
 
 
 # FAST API
@@ -88,9 +90,25 @@ async def del_category(category_id: int):
 @app.get("/transactions/")
 async def read_transactions():
     with sqlmodel.Session(engine) as session:
-        statement = sqlmodel.select(Transactions)
+        statement = sqlmodel.select(
+            Transactions.transaction_id,
+            Transactions.transaction_date,
+            Transactions.transaction_value,
+            Transactions.transaction_type,
+            Categories.category_name,
+        ).join(Categories, Transactions.category_id == Categories.category_id)
         results = session.exec(statement)
-        return results.all()
+        results_transactions = [
+            {
+                "transaction_id": row.transaction_id,
+                "transaction_date": row.transaction_date,
+                "transaction_value": row.transaction_value,
+                "transaction_type": row.transaction_type,
+                "category_name": row.category_name,
+            }
+            for row in results
+        ]
+        return results_transactions
 
 
 @app.get("/transactions/{transaction_id}/")
