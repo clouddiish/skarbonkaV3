@@ -34,6 +34,13 @@ class Transactions(sqlmodel.SQLModel, table=True):
     )
 
 
+class TransactionsCreate(sqlmodel.SQLModel):
+    transaction_date: date
+    transaction_value: float
+    transaction_type: TransactionType
+    category_name: str
+
+
 # FAST API
 
 app = fastapi.FastAPI()
@@ -83,8 +90,7 @@ def add_category(category_name):
         return {"message": "Category was added"}
 
 
-@app.delete("/categories/del/{category_id}/")
-async def del_category(category_id: int):
+def del_category(category_id: int):
     with sqlmodel.Session(engine) as session:
         statement = sqlmodel.select(Categories).where(
             Categories.category_id == category_id
@@ -98,8 +104,7 @@ async def del_category(category_id: int):
         return {"message": "Category was deleted"}
 
 
-@app.get("/transactions/")
-async def read_transactions():
+def getTransactions():
     with sqlmodel.Session(engine) as session:
         statement = sqlmodel.select(
             Transactions.transaction_id,
@@ -119,7 +124,13 @@ async def read_transactions():
             }
             for row in results
         ]
+        results_transactions.sort(key=lambda x: x["transaction_id"], reverse=True)
         return results_transactions
+
+
+@app.get("/transactions/")
+async def read_transactions():
+    return getTransactions()
 
 
 @app.get("/transactions/{transaction_id}/")
@@ -136,35 +147,18 @@ async def read_transaction(transaction_id: int):
 
 
 @app.post("/transactions/add/")
-async def add_transaction(
-    transaction_date: date,
-    transaction_value: float,
-    transaction_type: TransactionType,
-    category_name: str,
-):
+async def add_transaction(transaction: TransactionsCreate):
     with sqlmodel.Session(engine) as session:
-        if (
-            transaction_date is None
-            or transaction_value is None
-            or transaction_type is None
-            or category_name is None
-        ):
-            raise fastapi.HTTPException(
-                status_code=400, detail="Transaction attributes cannot be empty"
-            )
-
         category_names = [category.category_name for category in getCategories()]
 
-        if category_name not in category_names:
-            add_category(category_name)
-
-        # hiiii
+        if transaction.category_name not in category_names:
+            add_category(transaction.category_name)
 
         new_transaction = Transactions(
-            transaction_date=transaction_date,
-            transaction_value=transaction_value,
-            transaction_type=transaction_type,
-            category_id=getCategoryId(category_name),
+            transaction_date=transaction.transaction_date,
+            transaction_value=transaction.transaction_value,
+            transaction_type=transaction.transaction_type,
+            category_id=getCategoryId(transaction.category_name),
         )
 
         session.add(new_transaction)
@@ -184,6 +178,15 @@ async def del_transactions(transaction_id: int):
             raise fastapi.HTTPException(status_code=404, detail="Transaction not found")
         session.delete(transaction)
         session.commit()
+
+        current_categories_ids = {
+            getCategoryId(transaction["category_name"])
+            for transaction in getTransactions()
+        }
+
+        if transaction.category_id not in current_categories_ids:
+            del_category(transaction.category_id)
+
         return {"message": "Transaction was deleted"}
 
 
