@@ -1,21 +1,39 @@
+import { useState, useEffect } from "react";
 import axios from "axios";
-import React, { useEffect, useState } from "react";
 import TransactionAdder from "./TransactionAdder";
 import TransactionTable from "./TransactionTable";
 
 export default function EditableTransactionTable() {
   const [transactions, setTransactions] = useState([]);
 
-  useEffect(() => {
+  // fetch transactions from the API
+  const fetchTransactions = () => {
     axios
       .get("http://127.0.0.1:8000/transactions/")
       .then((response) => {
         setTransactions(response.data);
       })
       .catch((error) => {
-        console.error("There was a problem with the axios request:", error);
+        console.error("Error fetching transactions:", error);
       });
+  };
+
+  // call fetchTransactions on page load
+  useEffect(() => {
+    fetchTransactions();
   }, []);
+
+  // delete a transaction by ID, then refresh the table
+  const deleteTransaction = (id) => {
+    axios
+      .delete(`http://127.0.0.1:8000/transactions/del/${id}/`)
+      .then(() => {
+        fetchTransactions();
+      })
+      .catch((error) => {
+        console.error("There was a problem deleting the transaction:", error);
+      });
+  };
 
   // states to add new transaction
   const [newDate, setNewDate] = useState("");
@@ -25,27 +43,21 @@ export default function EditableTransactionTable() {
 
   // add a new transaction to the transactions array
   const addTransaction = () => {
+    let newTransaction = {
+      transaction_id:
+        transactions.length === 0
+          ? 0
+          : transactions[transactions.length - 1].transaction_id + 1,
+      transaction_date: newDate,
+      transaction_value: newValue,
+      transaction_type: newType,
+      category_id: newCategory,
+    };
+
     setTransactions((prevTransactions) => [
       ...prevTransactions,
-      {
-        transaction_id:
-          prevTransactions.length === 0
-            ? 0
-            : prevTransactions[prevTransactions.length - 1].id + 1,
-        transaction_date: newDate,
-        transaction_value: newValue,
-        transaction_type: newType,
-        category_id: newCategory,
-      },
+      newTransaction,
     ]);
-  };
-
-  // delete the transaction with a given id from the transactions array
-  const deleteTransaction = (id) => {
-    let newTransactions = transactions.filter((transaction) => {
-      return transaction.transaction_id !== id;
-    });
-    setTransactions(newTransactions);
   };
 
   // calculate categories set
