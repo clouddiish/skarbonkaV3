@@ -4,7 +4,6 @@ import sqlmodel
 from datetime import date
 from typing import Optional
 from enum import Enum
-import requests
 
 # SQL MODEL
 
