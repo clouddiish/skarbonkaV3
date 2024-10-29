@@ -34,6 +34,13 @@ class Transactions(sqlmodel.SQLModel, table=True):
     )
 
 
+class TransactionsCreate(sqlmodel.SQLModel):
+    transaction_date: date
+    transaction_value: float
+    transaction_type: TransactionType
+    category_name: str
+
+
 # FAST API
 
 app = fastapi.FastAPI()
@@ -117,6 +124,7 @@ def getTransactions():
             }
             for row in results
         ]
+        results_transactions.sort(key=lambda x: x["transaction_id"], reverse=True)
         return results_transactions
 
 
@@ -139,23 +147,18 @@ async def read_transaction(transaction_id: int):
 
 
 @app.post("/transactions/add/")
-async def add_transaction(
-    transaction_date: date,
-    transaction_value: float,
-    transaction_type: TransactionType,
-    category_name: str,
-):
+async def add_transaction(transaction: TransactionsCreate):
     with sqlmodel.Session(engine) as session:
         category_names = [category.category_name for category in getCategories()]
 
-        if category_name not in category_names:
-            add_category(category_name)
+        if transaction.category_name not in category_names:
+            add_category(transaction.category_name)
 
         new_transaction = Transactions(
-            transaction_date=transaction_date,
-            transaction_value=transaction_value,
-            transaction_type=transaction_type,
-            category_id=getCategoryId(category_name),
+            transaction_date=transaction.transaction_date,
+            transaction_value=transaction.transaction_value,
+            transaction_type=transaction.transaction_type,
+            category_id=getCategoryId(transaction.category_name),
         )
 
         session.add(new_transaction)

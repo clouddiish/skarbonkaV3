@@ -6,7 +6,7 @@ import TransactionTable from "./TransactionTable";
 export default function EditableTransactionTable() {
   const [transactions, setTransactions] = useState([]);
 
-  // fetch transactions from the API
+  // fetch transactions from the API and update transactions
   const fetchTransactions = () => {
     axios
       .get("http://127.0.0.1:8000/transactions/")
@@ -42,22 +42,30 @@ export default function EditableTransactionTable() {
   const [newCategory, setNewCategory] = useState("");
 
   // add a new transaction to the transactions array
-  const addTransaction = () => {
+  const addTransaction = async () => {
     let newTransaction = {
-      transaction_id:
-        transactions.length === 0
-          ? 0
-          : transactions[transactions.length - 1].transaction_id + 1,
       transaction_date: newDate,
-      transaction_value: newValue,
+      transaction_value: parseFloat(newValue), // Ensure this is a float
       transaction_type: newType,
-      category_id: newCategory,
+      category_name: newCategory,
     };
 
-    setTransactions((prevTransactions) => [
-      ...prevTransactions,
-      newTransaction,
-    ]);
+    console.log("Adding Transaction:", newTransaction);
+
+    try {
+      // Await the post request
+      await axios.post(
+        "http://127.0.0.1:8000/transactions/add/",
+        newTransaction
+      );
+      // Fetch transactions again after successfully adding
+      fetchTransactions();
+    } catch (error) {
+      console.error(
+        "Error adding transaction:",
+        error.response?.data?.detail || error.message
+      );
+    }
   };
 
   // calculate categories set
