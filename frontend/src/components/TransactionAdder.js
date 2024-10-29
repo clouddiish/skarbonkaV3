@@ -16,7 +16,7 @@ export default function TransactionAdder({
       <div className="row">
         <div className="col-md-3 col-sm-12">
           <label htmlFor="data" className="my-2">
-            Data:
+            Date:
           </label>
           <input
             type="date"
@@ -26,48 +26,47 @@ export default function TransactionAdder({
           />
         </div>
         <div className="col-md-3 col-sm-12">
-          <label htmlFor="wartosc" className="my-2">
-            Wartość:
+          <label htmlFor="value" className="my-2">
+            Value:
           </label>
           <input
             type="number"
-            id="wartosc"
+            id="value"
             step="0.01"
             placeholder={20}
             className="form-control"
             onChange={(e) => onNewValueChange(Number(e.target.value))}
           />
-          <p id="wartoscKom" className="komunikat my-2" />
         </div>
         <div className="col-md-3 col-sm-12">
-          <label htmlFor="dtyp" className="my-2">
-            Typ:
+          <label htmlFor="type" className="my-2">
+            Type:
           </label>
           <select
-            id="dtyp"
+            id="type"
             className="form-select"
             onChange={(e) => onNewTypeChange(e.target.value)}
           >
-            <option value="Wydatek">Wydatek</option>
-            <option value="Przychód">Przychód</option>
+            <option value="expense">expense</option>
+            <option value="income">income</option>
           </select>
         </div>
         <div className="col-md-3 col-sm-12">
-          <label htmlFor="dkategoria" className="my-2">
-            Kategoria:
+          <label htmlFor="category" className="my-2">
+            Category:
           </label>
           <input
-            list="listaKategorii"
+            list="categoryList"
             className="form-control"
             onChange={(e) => onNewCategoryChange(e.target.value)}
           />
-          <datalist id="listaKategorii">{options}</datalist>
+          <datalist id="categoryList">{options}</datalist>
         </div>
       </div>
       <div className="row justify-content-end">
         <div className="col-md-2 col-sm-12 mt-3">
           <button type="submit" className="container btn btn-light">
-            Dodaj
+            Add
           </button>
         </div>
       </div>

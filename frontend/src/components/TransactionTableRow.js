@@ -18,7 +18,7 @@ export default function TransactionTableRow({
           type="button"
           className="btn btn-light"
         >
-          Usuń
+          Delete
         </button>
       </td>
     </tr>
