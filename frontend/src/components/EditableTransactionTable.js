@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import TransactionAdder from "./TransactionAdder";
 import TransactionTable from "./TransactionTable";
+import TransactionSummary from "./TransactionSummary";
 
 export default function EditableTransactionTable() {
   const [transactions, setTransactions] = useState([]);
@@ -50,8 +51,6 @@ export default function EditableTransactionTable() {
       category_name: newCategory,
     };
 
-    console.log("Adding Transaction:", newTransaction);
-
     try {
       // Await the post request
       await axios.post(
@@ -86,11 +85,28 @@ export default function EditableTransactionTable() {
     );
   });
 
+  // calculate the summary values
+  const calculateTransactionsSum = (type) => {
+    let sum = 0;
+
+    for (let transaction of transactions) {
+      if (transaction.transaction_type === type)
+        sum = sum + transaction.transaction_value;
+    }
+    return sum;
+  };
+
   // render the components
   return (
     <div className="container">
       <div className="row">
-        <div className="col">
+        <div className="col-md-2 col-sm-12 order-md-last mb-5">
+          <h2 className="visually-hidden">Summary</h2>
+          <TransactionSummary
+            calculateTransactionsSum={calculateTransactionsSum}
+          />
+        </div>
+        <div className="col-md-10 col-sm-12">
           <h2 className="my-3">Add a new transaction</h2>
           <TransactionAdder
             options={options}
