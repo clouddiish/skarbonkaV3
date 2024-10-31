@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import TransactionAdder from "./TransactionAdder";
+import TransactionTableFilter from "./TransactionTableFilter";
 import TransactionTable from "./TransactionTable";
 import TransactionSummary from "./TransactionSummary";
 
@@ -23,6 +24,50 @@ export default function EditableTransactionTable() {
   useEffect(() => {
     fetchTransactions();
   }, []);
+
+  // states to filter transactions table
+  const [selectedType, setSelectedType] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedStart, setSelectedStart] = useState("");
+  const [selectedEnd, setSelectedEnd] = useState("");
+
+  // filtered transactions by selected type and category
+  let filteredTransactions = transactions;
+
+  if (selectedType === "all" && selectedCategory !== "all") {
+    filteredTransactions = transactions.filter((transaction) => {
+      return transaction.category_name === selectedCategory;
+    });
+  } else if (selectedType !== "all" && selectedCategory === "all") {
+    filteredTransactions = transactions.filter((transaction) => {
+      return transaction.transaction_type === selectedType;
+    });
+  } else if (selectedType !== "all" && selectedCategory !== "all") {
+    filteredTransactions = transactions.filter((transaction) => {
+      return (
+        transaction.type === selectedType &&
+        transaction.category_name === selectedCategory
+      );
+    });
+  }
+
+  // filter transactions by date
+  if (selectedStart === "" && selectedEnd !== "") {
+    filteredTransactions = filteredTransactions.filter((transaction) => {
+      return new Date(transaction.transaction_date) <= new Date(selectedEnd);
+    });
+  } else if (selectedStart !== "" && selectedEnd === "") {
+    filteredTransactions = filteredTransactions.filter((transaction) => {
+      return new Date(transaction.transaction_date) >= new Date(selectedStart);
+    });
+  } else if (selectedStart !== "" && selectedEnd !== "") {
+    filteredTransactions = filteredTransactions.filter((transaction) => {
+      return (
+        new Date(transaction.transaction_date) >= new Date(selectedStart) &&
+        new Date(transaction.transaction_date) <= new Date(selectedEnd)
+      );
+    });
+  }
 
   // delete a transaction by ID, then refresh the table
   const deleteTransaction = (id) => {
@@ -69,6 +114,7 @@ export default function EditableTransactionTable() {
 
   // calculate categories set
   let categories = new Set();
+  categories.add("all");
 
   transactions.forEach((transaction) => {
     categories.add(transaction.category_name);
@@ -89,7 +135,7 @@ export default function EditableTransactionTable() {
   const calculateTransactionsSum = (type) => {
     let sum = 0;
 
-    for (let transaction of transactions) {
+    for (let transaction of filteredTransactions) {
       if (transaction.transaction_type === type)
         sum = sum + transaction.transaction_value;
     }
@@ -100,14 +146,14 @@ export default function EditableTransactionTable() {
   return (
     <div className="container">
       <div className="row">
-        <div className="col-md-2 col-sm-12 order-md-last mb-5">
+        <div className="col-md-2 col-sm-12 order-md-last">
           <h2 className="visually-hidden">Summary</h2>
           <TransactionSummary
             calculateTransactionsSum={calculateTransactionsSum}
           />
         </div>
-        <div className="col-md-10 col-sm-12">
-          <h2 className="my-3">Add a new transaction</h2>
+        <div className="col-md-10 col-sm-12 pe-5">
+          <h2 className="my-3">add a new transaction</h2>
           <TransactionAdder
             options={options}
             onNewDateChange={setNewDate}
@@ -117,9 +163,19 @@ export default function EditableTransactionTable() {
             onAddTransaction={addTransaction}
           />
 
-          <h2 className="my-3">Transactions history</h2>
+          <h2 className="my-3">filter transactions</h2>
+          <TransactionTableFilter
+            options={options}
+            onSelectedTypeChange={setSelectedType}
+            onSelectedCategoryChange={setSelectedCategory}
+            onSelectedStartChange={setSelectedStart}
+            onSelectedEndChange={setSelectedEnd}
+          />
+
+          <h2 className="visually-hidden  my-3">transactions history</h2>
           <TransactionTable
-            transactions={transactions}
+            className="my-5"
+            transactions={filteredTransactions}
             onDeleteTransaction={deleteTransaction}
           />
         </div>

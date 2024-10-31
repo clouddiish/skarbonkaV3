@@ -4,7 +4,7 @@ export default function TitleBar() {
       <div className="container">
         <h1 className="my-3">
           <i className="bi bi-piggy-bank-fill me-3" />
-          Piggy bank
+          piggy bank
         </h1>
       </div>
     </div>

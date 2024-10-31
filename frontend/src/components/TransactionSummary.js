@@ -6,9 +6,9 @@ export default function TransactionSummary({ calculateTransactionsSum }) {
 
   return (
     <div className="row">
-      <TransactionSummaryCard title="Income" value={income} />
-      <TransactionSummaryCard title="Expenses" value={spending} />
-      <TransactionSummaryCard title="Balance" value={income - spending} />
+      <TransactionSummaryCard title="income" value={income} />
+      <TransactionSummaryCard title="expenses" value={spending} />
+      <TransactionSummaryCard title="balance" value={income - spending} />
     </div>
   );
 }

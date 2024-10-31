@@ -16,7 +16,7 @@ export default function TransactionAdder({
       <div className="row">
         <div className="col-md-3 col-sm-12">
           <label htmlFor="data" className="my-2">
-            Date:
+            date:
           </label>
           <input
             type="date"
@@ -27,7 +27,7 @@ export default function TransactionAdder({
         </div>
         <div className="col-md-3 col-sm-12">
           <label htmlFor="value" className="my-2">
-            Value:
+            value:
           </label>
           <input
             type="number"
@@ -40,7 +40,7 @@ export default function TransactionAdder({
         </div>
         <div className="col-md-3 col-sm-12">
           <label htmlFor="type" className="my-2">
-            Type:
+            type:
           </label>
           <select
             id="type"
@@ -53,7 +53,7 @@ export default function TransactionAdder({
         </div>
         <div className="col-md-3 col-sm-12">
           <label htmlFor="category" className="my-2">
-            Category:
+            category:
           </label>
           <input
             list="categoryList"
@@ -66,7 +66,7 @@ export default function TransactionAdder({
       <div className="row justify-content-end">
         <div className="col-md-2 col-sm-12 mt-3">
           <button type="submit" className="container btn btn-light">
-            Add
+            add
           </button>
         </div>
       </div>
