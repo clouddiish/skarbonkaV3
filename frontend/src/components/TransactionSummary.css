@@ -1,0 +1,9 @@
+.summary-card {
+  position: fixed;
+}
+
+@media (max-width: 768px){
+  .summary-card {
+      position: static;
+  }
+}
