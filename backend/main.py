@@ -8,7 +8,7 @@ from enum import Enum
 # SQL MODEL
 
 # connect to database
-db_url = "mysql+pymysql://root:root@localhost:3306/skarbonka"
+db_url = "mysql+pymysql://root:root@db:3306/skarbonka"
 engine = sqlmodel.create_engine(db_url, echo=True)
 
 
