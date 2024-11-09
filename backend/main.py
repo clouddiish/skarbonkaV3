@@ -45,6 +45,7 @@ class TransactionsCreate(sqlmodel.SQLModel):
 app = fastapi.FastAPI()
 
 
+# returns all categories
 def getCategories():
     with sqlmodel.Session(engine) as session:
         statement = sqlmodel.select(Categories)
@@ -52,11 +53,13 @@ def getCategories():
         return results.all()
 
 
+# endpoint to get all categories
 @app.get("/categories/")
 async def read_categories():
     return getCategories()
 
 
+# endpoint to get category by id
 @app.get("/categories/{category_id}/")
 async def read_category(category_id: int):
     with sqlmodel.Session(engine) as session:
@@ -70,6 +73,7 @@ async def read_category(category_id: int):
         return category
 
 
+# get category id by name
 def getCategoryId(category_name: str):
     categories = getCategories()
     for category in categories:
@@ -77,6 +81,7 @@ def getCategoryId(category_name: str):
             return category.category_id
 
 
+# add new category
 def add_category(category_name):
     with sqlmodel.Session(engine) as session:
         if category_name is None:
@@ -89,6 +94,7 @@ def add_category(category_name):
         return {"message": "Category was added"}
 
 
+# delete category
 def del_category(category_id: int):
     with sqlmodel.Session(engine) as session:
         statement = sqlmodel.select(Categories).where(
@@ -103,6 +109,7 @@ def del_category(category_id: int):
         return {"message": "Category was deleted"}
 
 
+# get all transactions
 def getTransactions():
     with sqlmodel.Session(engine) as session:
         statement = sqlmodel.select(
@@ -113,6 +120,8 @@ def getTransactions():
             Categories.category_name,
         ).join(Categories, Transactions.category_id == Categories.category_id)
         results = session.exec(statement)
+
+        # create list of result transactions
         results_transactions = [
             {
                 "transaction_id": row.transaction_id,
@@ -123,15 +132,20 @@ def getTransactions():
             }
             for row in results
         ]
+
+        # sort the result transactions by id in descending order
         results_transactions.sort(key=lambda x: x["transaction_id"], reverse=True)
+
         return results_transactions
 
 
+# endpoint to get all transactions
 @app.get("/transactions/")
 async def read_transactions():
     return getTransactions()
 
 
+# endpoint to get transaction by id
 @app.get("/transactions/{transaction_id}/")
 async def read_transaction(transaction_id: int):
     with sqlmodel.Session(engine) as session:
@@ -145,11 +159,14 @@ async def read_transaction(transaction_id: int):
         return transaction
 
 
+# endpoint to add a new transaction
 @app.post("/transactions/add/")
 async def add_transaction(transaction: TransactionsCreate):
     with sqlmodel.Session(engine) as session:
+        # get all current category names from table Categories
         category_names = [category.category_name for category in getCategories()]
 
+        # if the new transaction has category which is not in the current categories, add the new category
         if transaction.category_name not in category_names:
             add_category(transaction.category_name)
 
@@ -157,6 +174,7 @@ async def add_transaction(transaction: TransactionsCreate):
             transaction_date=transaction.transaction_date,
             transaction_value=transaction.transaction_value,
             transaction_type=transaction.transaction_type,
+            # Transactions table requires category id, not name - translate category name to id
             category_id=getCategoryId(transaction.category_name),
         )
 
@@ -165,6 +183,7 @@ async def add_transaction(transaction: TransactionsCreate):
         return {"message": "Transaction was added"}
 
 
+# endpoint to delete transaction by id
 @app.delete("/transactions/del/{transaction_id}/")
 async def del_transactions(transaction_id: int):
     with sqlmodel.Session(engine) as session:
@@ -178,17 +197,20 @@ async def del_transactions(transaction_id: int):
         session.delete(transaction)
         session.commit()
 
+        # get set of existing categories in the Transactions table
         current_categories_ids = {
             getCategoryId(transaction["category_name"])
             for transaction in getTransactions()
         }
 
+        # if category of the deleted transaction is not in the set of category names, delete the category from Categories table
         if transaction.category_id not in current_categories_ids:
             del_category(transaction.category_id)
 
         return {"message": "Transaction was deleted"}
 
 
+# allow origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
