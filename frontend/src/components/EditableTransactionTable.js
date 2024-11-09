@@ -147,7 +147,7 @@ export default function EditableTransactionTable() {
     <div className="container">
       <div className="row">
         <div className="col-md-2 col-sm-12 order-md-last">
-          <h2 className="visually-hidden">Summary</h2>
+          <h2 className="visually-hidden">summary</h2>
           <TransactionSummary
             calculateTransactionsSum={calculateTransactionsSum}
           />

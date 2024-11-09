@@ -2,17 +2,39 @@ version: "3.8"
 
 services:
   db:
-    image: mysql:5.7
+    build: ./database
     environment:
-      MYSQL_ROOT_PASSWORD: root # Root password for MySQL
-      MYSQL_DATABASE: skarbonka # Name of the database to be created
-      MYSQL_USER: user # Non-root user
-      MYSQL_PASSWORD: user # Password for the non-root user
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: skarbonka
+      MYSQL_ROOT_HOST: "%"
     ports:
-      - "3307:3306" # Expose port 3307
-    volumes:
-      - db_data:/var/lib/mysql # Persist data in a Docker volume
-      - ./database/skarbonka.sql:/docker-entrypoint-initdb.d/skarbonka.sql  # Mount the SQL file
+      - "3305:3306"
+    networks:
+      - my_network
+      
+  backend:
+    build: ./backend
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: skarbonka
+    ports:
+     - "8000:8000"
+    networks:
+      - my_network
 
-volumes:
-  db_data:
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    networks:
+      - my_network
+      
+networks:
+  my_network:
+    driver: bridge

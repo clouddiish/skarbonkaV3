@@ -7,7 +7,7 @@ import EditableTransactionTable from "./components/EditableTransactionTable";
 export default function App() {
   return (
     <>
-      <TitleBar title="Skarbonka" icon="bi bi-piggy-bank-fill"></TitleBar>
+      <TitleBar title="piggy bank" icon="bi bi-piggy-bank-fill"></TitleBar>
       <EditableTransactionTable />
     </>
   );
